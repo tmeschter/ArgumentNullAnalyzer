@@ -1,10 +1,10 @@
-﻿using Microsoft.CodeAnalysis;
+﻿using System;
+using ArgumentNullAnalyzer.Test.Helpers;
+using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CodeFixes;
 using Microsoft.CodeAnalysis.Diagnostics;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
-using System;
 using TestHelper;
-using ArgumentNullAnalyzer;
 
 namespace ArgumentNullAnalyzer.Test
 {
@@ -25,7 +25,7 @@ namespace ArgumentNullAnalyzer.Test
         [TestMethod]
         public void TestMethod2()
         {
-            var test = @"
+            var test = new MarkupText(@"
     using System;
     using System.Collections.Generic;
     using System.Linq;
@@ -35,22 +35,22 @@ namespace ArgumentNullAnalyzer.Test
 
     namespace ConsoleApplication1
     {
-        class TypeName
-        {   
+        class [|TypeName|]
+        {
         }
-    }";
+    }");
             var expected = new DiagnosticResult
             {
                 Id = "ArgumentNullAnalyzer",
                 Message = String.Format("Type name '{0}' contains lowercase letters", "TypeName"),
                 Severity = DiagnosticSeverity.Warning,
-                Locations =
-                    new[] {
-                            new DiagnosticResultLocation("Test0.cs", 11, 15)
-                        }
+                Locations = new[]
+                {
+                    new DiagnosticResultLocation("Test0.cs", test.Spans[0])
+                }
             };
 
-            VerifyCSharpDiagnostic(test, expected);
+            VerifyCSharpDiagnostic(test.Text, expected);
 
             var fixtest = @"
     using System;
@@ -63,10 +63,10 @@ namespace ArgumentNullAnalyzer.Test
     namespace ConsoleApplication1
     {
         class TYPENAME
-        {   
+        {
         }
     }";
-            VerifyCSharpFix(test, fixtest);
+            VerifyCSharpFix(test.Text, fixtest);
         }
 
         protected override CodeFixProvider GetCSharpCodeFixProvider()
